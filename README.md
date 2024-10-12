@@ -9,13 +9,14 @@ To visualise population trends and patterns from 1960 to 2020.
 
 **Skills:** 
 
-Joining datasets using `left-join()` and `merge()`, filtering and selecting variables, subseting data frames, converting long format longitudinal data to wide format, and visualisation.
+Joining datasets using `left-join()` and `merge()`, data manipulation using `filter()`, `select()`, `mutate()`, `arrange()`, `recode()` and others, subseting data frames using `subset()`, converting long format longitudinal data to wide format using `reshape()`, and visualisation using `ggplot`.
 
 **Tools** 
 
 Tidyverse (R-programming) 
 
 **Results**
+
 The world population followed an upward trend. The region of East Asia and Pacific had the largest population while North America had the lowest. In 2020, China had the largest population while Nauru had the smallest. Betweem 2011 and 2020, Oman's population grew by 57.07% while Yemen's population decreased by 16.99%.
 
 **Lesson**
