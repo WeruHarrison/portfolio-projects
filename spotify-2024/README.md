@@ -1,0 +1,1 @@
+The aim of this project is to clean the dataset. The input is a raw unclead spotify data and the output is a tidy dataset. The source of the data is the kaggle project: https://www.kaggle.com/code/pranalibose/data-cleaning-and-eda-on-spotify-data.
