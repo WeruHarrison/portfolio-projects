@@ -1,18 +1,17 @@
 library(tidyverse)
 
-setwd("~/Projects/data wrangling/spotify-2024")
 spotify <- read_csv("Most Streamed Spotify Songs 2024.csv")
 
+# Getting a high level view of the data
 dim(spotify)
 str(spotify)
 
 # Listing the number of NAs for each column
 NAs <- colSums(is.na(spotify)) %>% sort(decreasing = TRUE)
 
-
 # from my observation, 
 # 1. the 'TIDAL Popularity' column has no values. So it should be dropped.
-# 2. Replacing NAs in numeric columns with 0s. (Rationale for using 0 instead of mean or computing)
+# 2. Replacing NAs in numeric columns with 0s. (I should give the rationale for using 0s instead of mean or computing)
 # 3. 'Release Date' should be date format
 # 4. 'Explicit Track' should be factor level
 # 5. Check and remove duplicated rows
@@ -33,7 +32,6 @@ spotify <- replace(spotify, 4, as.Date(spotify$`Release Date`, format = "%m/%d/%
 
 # 4. Introducing factor level in 'Explicit Track' column and
 # making 'Track Score' and 'All Time Rank' ordered level
-
 
 # 5. check for duplicates and remove them
 dup <- spotify %>%
