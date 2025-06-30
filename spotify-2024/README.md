@@ -1,6 +1,6 @@
 **Goal**
 
-The aim of this project is to clean the dataset. The input is a raw unclead spotify data and the output is a tidy dataset. The source of the data is this [kaggle project.](https://www.kaggle.com/code/pranalibose/data-cleaning-and-eda-on-spotify-data) 
+The aim of this project is to clean the Spotify 2024 dataset. The input is a raw unclead Spotify data and the output is a tidy dataset. The source of the data is this [kaggle project.](https://www.kaggle.com/code/pranalibose/data-cleaning-and-eda-on-spotify-data) 
 
 **Skills**
 
