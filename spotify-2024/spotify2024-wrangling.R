@@ -70,3 +70,5 @@ duplicates <- spotify %>%
 spotify <- spotify %>% 
   distinct(.keep_all = TRUE)
 
+# The data is now ready for further exploration
+
