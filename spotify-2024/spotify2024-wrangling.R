@@ -1,46 +1,72 @@
 library(tidyverse)
 
-spotify <- read_csv("Most Streamed Spotify Songs 2024.csv")
+spotify <- read.csv("Most Streamed Spotify Songs 2024.csv", encoding="latin1")     # used the base function and the encoding option because of encoding issues in the first three columns
 
-# Getting a high level view of the data
-dim(spotify)
 str(spotify)
 
-# Listing the number of NAs for each column
-NAs <- colSums(is.na(spotify)) %>% sort(decreasing = TRUE)
+# from observation of the output of the above,
+# 1. The column names are not readable
+# 2. Columns "all_time_rank":"shazam_counts" should be numeric
+# 3. The column "release_date" should be date format
+# 4. "all_time_rank" should be factor level
+# 5. "explicit_track" should be logical
 
-# from my observation, 
-# 1. the 'TIDAL Popularity' column has no values. So it should be dropped.
-# 2. Replacing NAs in numeric columns with 0s. (I should give the rationale for using 0s instead of mean or computing)
-# 3. 'Release Date' should be date format
-# 4. 'Explicit Track' should be factor level
-# 5. Check and remove duplicated rows
+# 1. Making the column names readable
+colnames(spotify) <-  spotify %>% 
+  colnames() %>%
+  str_replace_all(., "\\.", "_") %>%
+  str_to_lower()
 
+# 2. Making columns "all_time_rank":"shazam_counts" numeric
+spotify <- spotify %>%
+  mutate(across(c(all_time_rank, spotify_streams:spotify_playlist_reach,
+                  youtube_views:youtube_playlist_reach,
+                   airplay_spins:siriusxm_spins,
+                  deezer_playlist_reach,
+                  pandora_streams:shazam_counts), parse_number))
 
-# 1. Dropping the 'TIDAL Popularity' column
-spotify <- select(spotify, -`TIDAL Popularity`)
+# 3. Correct "release_date" formatting
+spotify <- replace(spotify, 4, as.Date(spotify$release_date, format = "%m/%d/%Y"))
+
+# 4. Making "all_time_rank" ordered level
+spotify <- spotify %>% 
+  mutate(all_time_rank_factor = factor(all_time_rank, ordered = TRUE)) %>%     # with this conversion, the last song is ordered to be larger than the first. SO it should be reversed.
+  mutate(all_time_rank_factor = fct_rev(all_time_rank_factor))
+
+# 5. Making "explicit_track" logical
+spotify <- spotify %>%
+  mutate(explicit_track_logical = case_when(
+    explicit_track == 0 ~ "False",
+    explicit_track == 1 ~ "True"
+  )) %>%     # recoding the variable first
+  mutate(explicit_track_logical = as.logical(explicit_track_logical))
+
+# Checking for missing values
+dim(spotify)
+NAs <- colSums(is.na(spotify)) %>% 
+  sort(decreasing = TRUE) # Listing the number of NAs for each column
+
+# From my observation:
+# 1. the "tidal_popularity" column has no values. So it should be dropped.
+# 2. Replacing NAs in the numeric columns above with 0s to mean that these tracks did not receive any streams. (Rationale for using 0 instead of mean or computing)
+# 3. Check and remove duplicated rows
+
+# 1. Dropping the "tidal_popularity" column
+spotify <- select(spotify, -tidal_popularity)
 
 # 2. Replacing NAs in numeric columns with 0s. (Rationale for using 0 instead of mean or computing)
 spotify <- spotify %>% 
-  mutate_if(is.numeric, ~replace(., is.na(.), 0))     # a column is mutated by replacing NA with 0 if its numeric
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%     # a column is mutated by replacing NA with 0 if its numeric
+  mutate_if(is.integer, ~replace(., is.na(.), 0))     # a column is mutated by replacing NA with 0 if its integer
 
-# there are 5 rows with missing Artist. I looked for each Track using its name, album and ISRC but I did not find anything relevant. So, I choose to remove the 5 rows. 
-spotify <- spotify[!is.na(spotify$Artist), ]     # excluding the 5 rows with NAs in the Artist columns
-
-# 3. Correct 'Release Date' formatting
-spotify <- replace(spotify, 4, as.Date(spotify$`Release Date`, format = "%m/%d/%Y"))
-
-# 4. Introducing factor level in 'Explicit Track' column and
-# making 'Track Score' and 'All Time Rank' ordered level
-
-# 5. check for duplicates and remove them
-dup <- spotify %>%
+# 3. check for duplicates and remove them
+duplicates <- spotify %>%
   group_by_all() %>%  # Group by all columns to identify identical rows
   summarise(frequency = n()) %>%  # Count occurrences of each unique row
   ungroup() %>% 
   filter(frequency > 1)     # filter rows with more than 1 frequency
 
-# Two Tracks were duplicated. Removing them using the following:
+# Two observations were duplicated. Removing them using the following:
 spotify <- spotify %>% 
   distinct(.keep_all = TRUE)
-view(spotify)
+
