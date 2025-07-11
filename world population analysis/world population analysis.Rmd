@@ -1,5 +1,5 @@
 ---
-title: "World Population Analyis"
+title: "World Population Analysis"
 author: "Harrison Weru"
 date: "2024-10-10"
 output: html_document
