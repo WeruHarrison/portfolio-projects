@@ -1,0 +1,336 @@
+---
+title: "World Population Analyis"
+author: "Harrison Weru"
+date: "2024-10-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r packages, warning=FALSE}
+# Packages ----
+library(tidyverse)
+library(rworldmap)
+```
+
+### Data
+The data can be downloaded from [DataCamp's website](https://www.datacamp.com/datalab/w/cd6d6133-e4a4-45b4-bcc0-35088708f0df/edit). I loaded the data using the `readr` package in tidyverse and used `print()` to have a glimpse of the whole data.
+```{r loading data}
+world_pop <- read_csv('datalab_export_2024-08-17 12_57_46.csv')
+country_data <- read_csv('datalab_export_2024-08-17 12_59_55.csv')
+print(world_pop)
+print(country_data)
+```
+
+#### Joining the datasets
+```{r data}
+total_pop <- full_join(world_pop, country_data, by="Country Code")
+
+total_pop <- total_pop %>%
+  select(`Country Code`, TableName, Region:SpecialNotes, 
+         everything()) %>%
+  rename(CountryCode = `Country Code`, CountryName=TableName)
+print(total_pop)
+```
+
+
+### Data cleaning and standardization
+#### Cleaning categorical variable IncomeGroup
+I explored and recode the variable to make it a factor variable using the `factor()` command. 
+```{r data cleaning}
+count(total_pop, IncomeGroup)
+
+total_pop <- mutate(total_pop,
+                    IncomeGroup.rec = ifelse(IncomeGroup=="null", NA, IncomeGroup),
+                    IncomeGroup.fct = factor(IncomeGroup.rec,
+                                             labels = c("High income",
+                                                        "Low income",
+                                                        "Lower middle income",
+                                                        "Upper middle income")))
+count(total_pop, IncomeGroup, IncomeGroup.fct)
+```
+
+#### Creating regions subset
+```{r regions subset}
+regions <- c(unique(total_pop$Region))
+
+region_pop <- total_pop %>%
+  subset(CountryName %in% regions & !is.na(CountryName)) %>%
+  select(-Region, -IncomeGroup, -`Indicator Name`, -`Indicator Code`) %>%
+  arrange(desc(`2020`))
+print(region_pop)
+```
+
+
+### World Population Change Over Time
+```{r world population change, warning=FALSE}
+world_aggregate <- total_pop %>% 
+  filter(CountryCode == "WLD") %>%
+  select(-(CountryName:`Indicator Code`)) %>%
+  reshape(
+    idvar = "CountryCode",
+    varying = 2:64,
+    sep = "",
+    timevar = "year",
+    times = c(1960:2020),
+    new.row.names = 1:10000,
+    direction = "long"
+  )
+colnames(world_aggregate)[3] <- "Population"
+print(world_aggregate)
+```
+
+```{r world population change visualisation, warning=FALSE}
+world_aggregate_viz <- ggplot(data = world_aggregate, mapping = aes(x = as.numeric(year), y = as.numeric(Population), group = 1)) +
+  geom_line(color="tomato") +
+  geom_point(color="red")+
+  scale_y_continuous(labels = scales::label_comma())+
+  labs(title = "World Population 1960-2020", x = "Year", y = "Total Population")+
+  theme_bw()+
+  theme(plot.title = element_text(hjust=0.5))
+world_aggregate_viz
+
+```
+
+### Regions with large and small populations
+```{r region population visualisation}
+region_pop_viz <- ggplot(data = region_pop, mapping = aes(y = forcats::fct_reorder(CountryName, (`2020`)), x = `2020`)) +
+  geom_col(aes(fill= CountryName), show.legend = FALSE)+
+  scale_x_continuous(labels = scales::label_comma())+
+  labs(title = "Most and Least Populous Regions in 2020", x = "Population", y = "")+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = 0.5))
+region_pop_viz
+```
+
+
+### Regions population change in the past 10 years
+```{r region data to long, warning=FALSE}
+region_pop_long <- region_pop %>% 
+  select("CountryCode",
+         "CountryName",
+         55:64) %>%
+  reshape(
+    idvar = "CountryCode",
+    varying = 3:12,
+    sep = "",
+    timevar = "year",
+    times = c(2011:2020),
+    new.row.names = 1:10000,
+    direction = "long"
+  )
+colnames(region_pop_long) <- c("CountryCode", "Region", "Year", "Population")
+print(region_pop_long)
+```
+
+```{r region population change visualisation}
+region_pop_change_viz <- ggplot(data = region_pop_long, mapping = aes(x = as.numeric(Year), y = as.numeric(Population), group = Region)) +
+  geom_line(aes(color = Region)) +
+  geom_point(aes(colour = Region)) + 
+  scale_x_continuous(limits = c(2011, 2020), breaks = c(2011, 2013, 2015, 2017, 2019))+
+  scale_y_continuous(labels = scales::label_comma()) +
+  labs(title = "Population Change in Regions (2011-2020)",
+       x = "",
+       y = "Population") +
+  theme_light()+
+  theme(plot.title = element_text(hjust = 0.5))
+region_pop_change_viz
+```
+
+### Population change in the world in the past 10 years
+#### Most populous countries in 2020
+```{r most populous countries}
+#population of countries
+country_pop <- total_pop %>%
+  select("CountryCode",
+         "CountryName",
+         "Region",
+         59:68) %>%
+  filter(!(Region == "null" | is.na(Region))) #Countries with region as "null" or have NAs are not real countries but group of countries. This code removes them.
+print(country_pop)
+
+most_populous_viz <- country_pop %>% 
+  slice_max(order_by = `2020`, n = 10) %>%
+  ggplot(mapping = aes(x = `2020`, y = forcats::fct_reorder(CountryName, `2020`))) +
+  geom_col(aes(fill = CountryCode), show.legend = FALSE)+
+  scale_x_continuous(labels = scales::label_comma()) +
+  labs(title = "Most Populous Countries in the World, 2020",
+       x = "Population",
+       y = "") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+most_populous_viz
+```
+
+#### Least populous countries in 2020
+```{r least populous countries}
+least_populous_viz <- country_pop %>% 
+  slice_min(order_by = `2020`, n = 10) %>%
+  ggplot(mapping = aes(x = `2020`, y = forcats::fct_reorder(CountryName, `2020`))) +
+  geom_col(aes(fill = CountryCode), show.legend = FALSE)+
+  scale_x_continuous(labels = scales::label_comma()) +
+  labs(title = "Least Populous Countries in the World, 2020",
+       x = "Population",
+       y = "") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+least_populous_viz
+```
+
+
+### Rate of population change, 2011-2020
+```{r rate of population change}
+# Calculating the change and the rate of change of all countries in the country population data frame
+rate_pop_change <- country_pop %>% 
+  mutate("Change" = `2020`-`2011`,
+         "Change, %" = round(((`2020`-`2011`)/`2011`)*100, 2)) %>%
+  select(CountryCode, CountryName, Change, `Change, %`) %>%
+  arrange(desc(`Change, %`))
+print(rate_pop_change)
+# countries with the highest increase
+increase_pop <- slice_max(rate_pop_change, order_by = `Change, %`, n = 10)
+
+# countries with the highest decrease
+decrease_pop <- slice_min(rate_pop_change, order_by = `Change, %`, n = 10)
+```
+
+```{r high and low population change visualisation}
+rate_pop_change_viz <- bind_rows(increase_pop, decrease_pop) %>% # Binding the rows with highest increase and decrease to present them in a single visualisation. 
+  ggplot(mapping = aes(x = `Change, %`, y = forcats::fct_reorder(CountryName, `Change, %`))) +
+  geom_col(aes(fill = CountryCode), show.legend = FALSE) +
+  geom_text(data = decrease_pop, aes(label = `Change, %`), nudge_x = 2.5, size = 3) +
+  geom_text(data = increase_pop, aes(label = `Change, %`), nudge_x = -2.25, size = 3) +
+  scale_x_continuous(labels = scales::label_comma()) +
+  labs(title = "Countries With The Highest Population Change, 2011-2020",
+       x = "Population Change (%)",
+       y = "") +
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+rate_pop_change_viz
+```
+
+
+
+### Population change of all countries, 2011-2020
+```{r geographic coordinates}
+world <- map_data("world") %>% 
+  filter(!long > 180) %>% # There is no longitude higher than 180 degrees.
+  mutate(region = case_when( # Standardizing some of the country names
+    trimws(subregion) == "British" ~ "British Virgin Islands",
+    trimws(subregion) == "US" ~ "US Virgin Islands",
+    trimws(subregion) == "Hong Kong" ~ "Hong Kong",
+    trimws(subregion) == "Macao" ~ "Macao",
+    TRUE ~ as.character(region)
+  ))
+head(world, n = 20)
+```
+
+There were other country names in the `rate_pop_change` data frame that required standardization with the the `world` data frame.
+```{r standardizing country names}
+rate_pop_change$CountryName <- recode(rate_pop_change$CountryName, 
+                     `"Bahamas, The"` = "Bahamas",
+                     `"Congo, Dem. Rep."` = "Democratic Republic of the Congo",
+                     `"Congo, Rep."` = "Republic of Congo",
+                     `"Egypt, Arab Rep."` = "Egypt",
+                     `"Gambia, The"` = "Gambia",
+                     `"Hong Kong SAR, China"` = "Hong Kong",
+                     `"Iran, Islamic Rep."` = "Iran",
+                     `"Korea, Dem. People's Rep."` = "North Korea",
+                     `"Korea, Rep."` = "South Korea",
+                     `"Macao SAR, China"` = "Macao",
+                     `"Micronesia, Fed. Sts."` = "Micronesia",
+                     `"Venezuela, RB"` = "Venezuela",
+                     `"Yemen, Rep."` = "Yemen",
+                     `Antigua and Barbuda` = "Antigua",
+                     "Virgin Islands (U.S.)" = "US Virgin Islands",
+                     "Brunei Darussalam" = "Brunei",
+                     "Cabo Verde" = "Cape Verde",
+                     "Côte d'Ivoire" = "Ivory Coast",
+                     "Curaçao" = "Curacao",
+                     "Eswatini" = "Swaziland",
+                     "Kyrgyz Republic" = "Kyrgyzstan",
+                     "Lao PDR" = "Laos",
+                     "Russian Federation" = "Russia",
+                     "São Tomé and Principe" = "Sao Tome and Principe",
+                     "Sint Maarten (Dutch part)" = "Sint Maarten",
+                     "Slovak Republic" = "Slovakia",
+                     "St. Kitts and Nevis" = "Saint Kitts",
+                     "St. Lucia" = "Saint Lucia",
+                     "St. Martin (French part)" = "Saint Martin",
+                     "St. Vincent and the Grenadines" = "Saint Martin",
+                     "Syrian Arab Republic" = "Syria",
+                     "Trinidad and Tobago" = "Trinidad",
+                     "United Kingdom" = "UK",
+                     "United States" = "US"
+                     )
+```
+
+After recoding the country names, I merged the location data of the countries with the rates of changes. I used the `merge()` function of base R to accomplish this. 
+
+```{r merging rate of population and coordinates}
+rate_pop_change <- merge(rate_pop_change,
+        world,
+        by.x = "CountryName",
+        by.y = "region",
+        all = TRUE)  %>%
+  select(-(subregion)) %>%
+  arrange(group, order)
+head(rate_pop_change, n = 20)
+```
+
+The following is the visualisation of the rate of population change for all countries in the data.
+```{r countries population change visualisation}
+all_change_viz <- ggplot() +
+  geom_polygon(data = rate_pop_change, 
+               aes(x = long, y = lat, group = group,
+               fill = `Change, %`)) +
+  coord_quickmap() +
+  theme_void() +
+  labs(title = "Population Change of All Countries (2011-2020)") +
+  scale_fill_continuous(name="Population\ngrowth rate", type = "viridis") +
+  theme(legend.position="bottom", plot.title = element_text(hjust = 0.5))
+all_change_viz
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
