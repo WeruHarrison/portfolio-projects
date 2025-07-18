@@ -1,5 +1,4 @@
 library(tidyverse)
-library(validate)
 
 songs <- read_csv("unpopular_songs.csv")
 genre <- read_csv("z_genre_of_artists.csv")
@@ -90,16 +89,3 @@ unique(songs$genre)
 # I noticed that all `genre` observations have square brackets (`[]`), which have to be removed
 songs$genre <- str_remove_all(songs$genre, "\\[|\\]")
 
-# Checking for NAs
-NAs <- colSums(is.na(songs))
-
-print(NAs)
-
-# Check for duplicates
-duplicates <- songs %>%
-  group_by_all() %>%  # Group by all columns to identify identical rows
-  summarise(frequency = n()) %>%  # Count occurrences of each unique row
-  ungroup() %>% 
-  filter(frequency > 1)     # filter rows with more than 1 frequency
-
-head(duplicates)     # No duplicates
