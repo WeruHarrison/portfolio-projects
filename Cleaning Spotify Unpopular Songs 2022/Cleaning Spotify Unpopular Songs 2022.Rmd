@@ -16,7 +16,7 @@ genre <- read_csv("z_genre_of_artists.csv")
 
 ```
 
-## Getting sense of the `songs` dataframe
+## General Overview of the `songs` Dataframe
 
 
 ```{r}
@@ -31,15 +31,16 @@ glimpse(songs)
 4. `mode` should be factor level (major or minor)
 5. `key` should be a factor level
 6. `popularity` can be an ordered factor level because the lower the number the lower the popularity
- 7. Merge the two dataframes. Common column are `track_artist` and `artist_name`
+7. Merge the two dataframes. Common column are `track_artist` and `artist_name`
 
 
-## 1. Reordering the columns
+## Reordering the Columns
 ```{r}
 songs <- songs %>% 
   select(track_id,
          track_artist,
-         track_name,     # Selecting the three first to ensure they come at the beginning of the dataframe then everything follows
+         track_name,
+         popularity,     # Selecting the four first to ensure they come at the beginning of the dataframe then everything follows
          everything()
          )
 
@@ -47,23 +48,24 @@ head(songs)
 
 ```
 
-## 2. Checking if `duration_ms` is less than 0
+## Checking the Duration Column
 ```{r}
 invalid_songs <- songs %>%
   filter(duration_ms == 0 | duration_ms < 0)     # filtering rows where the `duration_ms` column is equal to zero or less than 0
 
-head(invalid_songs)    # No invalid tracks were found
+head(invalid_songs)
 ```
+No invalid tracks were found meaning the track duration of all the songs were greater than zero, which is something you would expect.
 
-## 3. Splitting `duration_ms` to minutes and seconds
+## Splitting the Duration COlumn to Minutes and Seconds
+According to the Spotify API documentation, the variable is in milliseconds. In this operation, it is divided by 1000 to convert it to seconds (since 1 second = 1000 milliseconds) then the output is converted to periods. A new column is then created where the seconds are rounded to the nearest whole number.
 ```{r}
-songs$track_length <-  seconds_to_period(songs$duration_ms/1000)     # first, the `duration_ms` variable is divided by 1000 to convert it to seconds then the output is converted to periods
-songs <- songs %>% mutate(track_length, duration_min = round(track_length, 2))     # A new column is created where the seconds are rounded to the nearest whole number
-
+songs$track_length <-  seconds_to_period(songs$duration_ms/1000)
+songs <- songs %>% mutate(track_length, duration_min = round(track_length))
 head(songs)
 ```
 
-## 4. Converting `mode` to a factor level
+## Converting `mode` to a Factor Variable
 ```{r}
 songs$mode_fct <- factor(songs$mode,
                          levels = c(0, 1),
@@ -74,17 +76,19 @@ class(songs$mode_fct)     # the new column is of the factor class
 levels(songs$mode_fct)
 ```
 
-## 5. Converting `key` to a factor level
+## Converting `key` to a Factor Variable
+The characters `#` and `b` were used to represent the sharp and flat musical notations. Using the actual unicode notations is likely to introduce compatibility issues when the final output is exported to other formats and/or used in different technologies. The conversion was guided by this wikipedia page: https://en.wikipedia.org/wiki/Pitch_class.
 ```{r}
 songs$key_fct <- factor(songs$key,
                         levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
-                        labels = c("C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"))     # the character `#` and `b` were used to represent the sharp and flat notations. Using the actual unicode notations is likely to introduce compatibility issues when the final output is exported to other formats. The conversion was guided by this wikipedia page: https://en.wikipedia.org/wiki/Pitch_class
+                        labels = c("C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"))
 
 class(songs$key_fct)     # the new column is of the factor class
 levels(songs$key_fct)
 ```
 
-### validating the conversion
+### Validating the conversion
+
 Here, the dataframe is grouped by the `key` and `key_fct` columns and then they are counted under each group. It shows how many values belong to each group in both case. When the two outputs are combined in the same dataframe, you can compare the number of observation in each group.
 
 ```{r}
@@ -104,33 +108,122 @@ print(validate_key)
 The dataframe shows that the notations were correct and the observation within each group resembled the original column. It is safe to assume the conversion was accurate.
 
 
-## 6. Converting `popularity` to an ordered factor level
+## Converting `popularity` to an Ordered Factor Variable
 ```{r}
 songs$popularity <- factor(songs$popularity, ordered = TRUE)
 class(songs$popularity)
 ```
 
 
-## 7. Merge the two dataframes. Common column are `track_artist` and `artist_name`
+## Merging `songs` and `genre` Dataframes
 ```{r}
 songs <- songs %>%
-  left_join(genre, by = c("track_artist"="artist_name"), relationship = "many-to-many")
+  left_join(genre,
+            by = c("track_artist"="artist_name"),
+            relationship = "many-to-many")
+
+head(songs)
 ```
 
-## Observing the dataframe again
+## Cleaning the Joined Dataframe
+
+After joining the two dataframes, it is important to view the joined dataframe and take note of new issues that might have occurred, especially in the columns joined from the `genre` dataframe.
 ```{r}
 str(songs)
+songs %>% group_by(genre) %>% count()
 ```
-Notice the brackets with the `genre` column. It warrants further investigation
+
+## Observations in the `genre` Column
+
+1. All entries have square brackets (`[]`) except NAs
+2. All entries have single quotes
+3. Some NAs
+4. some entries have multiple values separated with a comma. Each value is in single quotes
+5. Some cells have square brackets alone
+
+### Removing Square Brackets and Single Quotes
+Starting with the first two issues:
+```{r}
+songs$genre <- str_remove_all(songs$genre, "\\[|\\]|\\'")
+
+songs %>% group_by(genre) %>% count()
+```
+
+The new entries are empty strings but they are not NAs. Since songs usually have genres, I will convert these to NAs then replace all NAs with an "uncategorised" genre.
 
 ```{r}
-unique(songs$genre)
+songs$genre[songs$genre==""] <- NA
+songs$genre <- str_replace_na(songs$genre, 
+                              "uncategorised")
+
+songs %>% group_by(genre) %>% count()
 ```
 
-All `genre` observations have square brackets (`[]`), which have to be removed
-
+### Separating Entries with Multiple Values
 ```{r}
-songs$genre <- str_remove_all(songs$genre, "\\[|\\]")
+songs <- songs %>% 
+  separate_longer_delim(genre, ",")
+
+songs %>% group_by(genre) %>% count()
 ```
+
+## Checking for NAs in the Dataframe
+```{r}
+NAs <- colSums(is.na(songs))
+
+print(NAs)
+```
+
+I will drop the two columns with NAs because there absence will not affect further exploration
+```{r}
+songs <- songs %>% 
+  select(-c(id, artist_id))
+
+glimpse(songs)
+```
+
+## Checking for duplicates
+```{r}
+dups <- songs %>%
+  group_by_all() %>%  # Group by all columns to identify identical rows
+  summarise(frequency = n()) %>%  # Count occurrences of each unique row
+  ungroup() %>% 
+  filter(frequency > 1)     # filter rows with more than 1 frequency
+
+head(dups)
+```
+23 duplicates exist
+
+### Removing duplicates
+```{r}
+songs  <-  songs %>%
+  distinct(.keep_all = TRUE)
+
+dups_after <- songs %>%
+  group_by_all() %>%
+  summarise(frequency = n()) %>%
+  ungroup() %>%
+  filter(frequency > 1)
+
+head(dups_after)
+```
+No duplicates after the above operations
+
+## Arranging the Dataframe
+```{r}
+songs <- songs %>%
+  arrange(desc(popularity),
+          track_name)
+
+head(songs)
+```
+
+## Exporting the Output
+The final tidy dataset is exported to a csv file in the same working directory
+```{r}
+write.csv(songs, "cleaned_unpopular_songs.csv")
+```
+
+
 
 
