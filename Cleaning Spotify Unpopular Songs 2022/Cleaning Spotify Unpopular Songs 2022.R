@@ -1,7 +1,7 @@
 library(tidyverse)
 
 songs <- read_csv("unpopular_songs.csv")
-genre <- read_csv("z_genre_of_artists.csv")
+genre <- read_csv("z_genre_of_artists.csv", col_names = c("id", "track_artist", "artist_id", "genre"), skip=1)
 
 # General Overview of the `songs` Dataframe
 str(songs)
