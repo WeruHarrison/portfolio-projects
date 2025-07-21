@@ -3,7 +3,7 @@ library(tidyverse)
 songs <- read_csv("unpopular_songs.csv")
 genre <- read_csv("z_genre_of_artists.csv")
 
-# Getting sense of the `songs` dataframe
+# General Overview of the `songs` Dataframe
 str(songs)
 glimpse(songs)
 
@@ -167,3 +167,8 @@ head(songs)
 
 # Exporting the final tidy dataset to a csv file in the same working directory
 write.csv(songs, "cleaned_unpopular_songs.csv")
+
+
+
+
+
