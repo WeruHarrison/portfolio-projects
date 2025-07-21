@@ -16,7 +16,7 @@ glimpse(songs)
 # 7. Merge the two dataframes. Common column are `track_artist` and `artist_name`
 
 
-# 1. Reordering the columns
+# Reordering the columns
 songs <- songs %>% 
   select(track_id,
          track_artist,
@@ -28,14 +28,14 @@ songs <- songs %>%
 head(songs)
 
 
-# 2. Checking if `duration_ms` is less than 0
+# Checking if `duration_ms` is less than 0
 invalid_songs <- songs %>%
   filter(duration_ms == 0 | duration_ms < 0)     # filtering rows where the `duration_ms` column is equal to zero or less than 0
 
 head(invalid_songs)    # No invalid tracks were found
 
 
-# 3. Splitting `duration_ms` to minutes and seconds
+# Splitting `duration_ms` to minutes and seconds
 songs$track_length <-  seconds_to_period(songs$duration_ms/1000)     # first, the `duration_ms` variable is divided by 1000 to convert it to seconds then the output is converted to periods
 songs <- songs %>% 
   mutate(track_length, 
@@ -44,7 +44,7 @@ songs <- songs %>%
 head(songs)
 
 
-# 4. Converting `mode` to a factor level
+# Converting `mode` to a factor level
 songs$mode_fct <- factor(songs$mode,
                          levels = c(0, 1),
                          labels = c("Minor", "Major")
@@ -54,7 +54,7 @@ class(songs$mode_fct)     # the new column is of the factor class
 levels(songs$mode_fct)
 
 
-# 5. Converting `key` to a factor level
+# Converting `key` to a factor level
 songs$key_fct <- factor(songs$key,
                         levels = c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11),
                         labels = c("C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"))     # the character `#` and `b` were used to represent the sharp and flat notations. Using the actual unicode notations is likely to introduce compatibility issues when the final output is exported to other formats. The conversion was guided by this wikipedia page: https://en.wikipedia.org/wiki/Pitch_class
@@ -79,14 +79,14 @@ validate_key <- cbind(unique_key,
 print(validate_key)     # The dataframe shows that the notations were correct and the observation within each group resembled the original column. It is safe to assume the conversion was accurate.
 
 
-# 6. Converting `popularity` to an ordered factor level
+# Converting `popularity` to an ordered factor level
 songs$popularity <- factor(songs$popularity, 
                            ordered = TRUE)
 
 class(songs$popularity)
 
 
-# 7. Merge the two dataframes. Common column are `track_artist` and `artist_name`
+# Merge the two dataframes. Common column are `track_artist` and `artist_name`
 songs <- songs %>%
   left_join(genre,
             by = c("track_artist"="artist_name"), 
@@ -105,7 +105,7 @@ songs %>% group_by(genre) %>% count()
 # 4. some entries have multiple values separated with a comma. Each value is in single quotes
 # 5. Some cells have square brackets alone
 
-# 1. Removing square brackets and single quotes
+# Removing square brackets and single quotes
 songs$genre <- str_remove_all(songs$genre, "\\[|\\]|\\'")
 
 songs %>% group_by(genre) %>% count()
@@ -117,7 +117,7 @@ songs$genre <- str_replace_na(songs$genre,
 
 songs %>% group_by(genre) %>% count()
 
-# 2. Separating entries with multiple values (NOTE: They are separated by a comma)
+# Separating entries with multiple values (NOTE: They are separated by a comma)
 songs <- songs %>% 
   separate_longer_delim(genre, ",")
 
