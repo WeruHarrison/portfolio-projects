@@ -89,7 +89,6 @@ class(songs$popularity)
 # Merge the two dataframes. Common column are `track_artist` and `artist_name`
 songs <- songs %>%
   left_join(genre,
-            by = c("track_artist"="artist_name"), 
             relationship = "many-to-many")
 
 head(songs)
