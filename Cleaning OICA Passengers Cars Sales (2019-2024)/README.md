@@ -1,6 +1,6 @@
 **Goal**
 
-The aim of this project is to clean the global passengers cars sales as reported by the  International Organization of Motor Vehicle Manufacturers (OICA). The input is a raw sales data from the 2019 to 2019 and the output is a tidy sales dataset. The data can be found on the official [OICA website.]([https://www.kaggle.com/code/pranalibose/data-cleaning-and-eda-on-spotify-data](https://www.oica.net/category/sales-statistics/)
+The aim of this project is to clean the global passengers cars sales as reported by the  International Organization of Motor Vehicle Manufacturers (OICA). The input is a raw sales data from the 2019 to 2019 and the output is a tidy sales dataset. The data can be found on the official [OICA website.](https://www.oica.net/category/sales-statistics/)
 <img width="1366" height="1092" alt="image" src="https://github.com/user-attachments/assets/7aee11d5-912e-4f8a-81f4-9c1f8edee2e0" />
 
 
