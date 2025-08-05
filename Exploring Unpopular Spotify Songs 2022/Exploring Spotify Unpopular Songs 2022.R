@@ -28,7 +28,7 @@ unpopular_artists <- songs_by_artist %>%
   head(n=10)
 
 # The next step was to find the average popularity score of these artists. 
-#Sidenote: This can be compared with the top 10 artists with the most unpopular songs
+
 # In this step, I used the dataset of unique songs, grouped by artists.
 # I created a new variable that is the average of the popularity score of the songs of an artist then took the unique scores to preserve the artist and the average popularity score only.
 avg_pop <- songs_by_artist %>% 
@@ -183,8 +183,4 @@ plot_popularity_key <- ggplot(songs,
 plot_popularity_key
 
 # What's the average danceability score of unpopular score?
-
-# I want to count the number of songs for each artist in the dataset.
-# to do this, group by tracks and count 
-# Which genres have the most unpopular songs and is danceability a key indicator?
 
