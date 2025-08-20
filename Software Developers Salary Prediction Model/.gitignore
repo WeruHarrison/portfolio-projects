@@ -5,3 +5,7 @@ env_sal_prediction/
 _pycache_/
 
 *.pyc
+
+# the original dataset is >100mbs so it cannot be pused to github
+survey_results_public.csv
+
