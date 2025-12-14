@@ -8,3 +8,4 @@ This repo contains all of the data analysis projects I have done.
 5. [Exploring Spotify Unpopular Songs 2022](Exploring%20Unpopular%20Spotify%20Songs%202022)
 6. [Software Developers Salary Prediction Model](software_developers_salary_prediction_model)
 7. [Exploring Data Engineers Salaries](Exploring%20Data%20Engineers%20Salaries)
+8. [Stack Overflow 2025 Developer Survey — Executive Dashboard](stack-overflow-2025-developer-survey-dashboard)
