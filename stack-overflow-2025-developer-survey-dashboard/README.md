@@ -1,7 +1,10 @@
 # Stack Overflow 2025 Developer Survey — Executive Dashboard
 The [Stack Overflow Developer Survey](https://survey.stackoverflow.co/2025) is one of the richest public datasets about the global developer community. Every year it captures how developers learn, work, and think about tools. This project visualises the 2025 survey with the goal of transforming responses into an executive-friendly dashboard. Instead of asking “What does every chart say?”, I asked:
 **“What does leadership actually need to understand from this data?”**
-I downloaded the data [here](https://survey.stackoverflow.co/)
+
+![alt text](image.png)
+
+I downloaded the data [here](https://survey.stackoverflow.co/).
 
 ---
 
