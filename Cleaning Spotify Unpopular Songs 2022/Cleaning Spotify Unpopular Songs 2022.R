@@ -164,8 +164,8 @@ songs <- songs %>%
 
 head(songs)
 
-# Exporting the final tidy dataset to a csv file in the same working directory
-write.csv(songs, "cleaned_unpopular_songs.csv")
+# Exporting the final tidy dataset to a file
+saveRDS(songs, "cleaned_unpopular_songs.rds")
 
 
 
