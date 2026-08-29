@@ -51,14 +51,16 @@ hist_liveness <- hist(df_nogenre$liveness,
                       main = "Histogram of liveness", 
                       xlab =  "liveness")
 
+## Song Tempo: 
+df_nogenre %>% 
+  filter(tempo == 0) %>%
+  count()
 
+# I have decided to remove the songs with tempo of 0 bpm because they are just 13
+df_nogenre <- df_nogenre %>% 
+  filter(tempo != 0)
 
-
-
-
-
-
-
+summary(df_nogenre$tempo)
 
 
 
